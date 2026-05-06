@@ -1,28 +1,23 @@
-import {useState} from 'react';
-import logo from './assets/images/logo-universal.png';
 import './App.css';
-import {Greet} from "../wailsjs/go/main/App";
+import { Header } from './components/Header';
 
 function App() {
-    const [resultText, setResultText] = useState("Please enter your name below 👇");
-    const [name, setName] = useState('');
-    const updateName = (e: any) => setName(e.target.value);
-    const updateResultText = (result: string) => setResultText(result);
-
-    function greet() {
-        Greet(name).then(updateResultText);
-    }
-
     return (
-        <div id="App">
-            <img src={logo} id="logo" alt="logo"/>
-            <div id="result" className="result">{resultText}</div>
-            <div id="input" className="input-box">
-                <input id="name" className="input" onChange={updateName} autoComplete="off" name="input" type="text"/>
-                <button className="btn" onClick={greet}>Greet</button>
-            </div>
+        <div className="app-container">
+            <main className="main-content">
+                <Header />
+                <div className="page-canvas">
+                    <div className="page-header">
+                        <div>
+                            <h1 className="page-title">Busca Avançada de Relatórios</h1>
+                            <p className="page-subtitle">Filtre, analise e exporte tickets de atendimento com precisão corporativa.</p>
+                        </div>
+                    </div>
+                    {/* Content will go here */}
+                </div>
+            </main>
         </div>
-    )
+    );
 }
 
-export default App
+export default App;

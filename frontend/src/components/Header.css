@@ -1,0 +1,64 @@
+.top-nav-bar {
+    background-color: var(--surface-container-lowest);
+    width: 100%;
+    height: 64px;
+    border-bottom: 1px solid var(--outline-variant);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 var(--container-margin);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.nav-left, .nav-right {
+    display: flex;
+    align-items: center;
+    gap: var(--stack-default);
+}
+
+.nav-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--stack-default);
+}
+
+.app-title {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.01em;
+}
+
+.avatar-container {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-default);
+    background-color: var(--surface-container-high);
+    border: 1px solid var(--outline-variant);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-container);
+    color: var(--on-primary-container);
+}
+
+.avatar-initial {
+    font-size: 14px;
+    font-weight: 600;
+}
