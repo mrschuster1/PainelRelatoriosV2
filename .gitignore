@@ -2,7 +2,9 @@ build/bin
 node_modules
 frontend/dist
 .env
-.env.*
+.env.local
+.env.*.local
+!.env.example
 
 # Agent files
 .agent/
