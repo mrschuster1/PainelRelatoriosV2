@@ -1,3 +1,38 @@
 build/bin
 node_modules
 frontend/dist
+.env
+.env.*
+
+# Agent files
+.agent/
+.agents/
+.gemini/
+.gsd/
+GSD-STYLE.md
+PROJECT_RULES.md
+model_capabilities.yaml
+adapters/
+docs/model-selection-playbook.md
+docs/token-optimization-guide.md
+scripts/validate-*
+scripts/setup_search.*
+scripts/search_repo.*
+
+# Standard ignores
+logs/
+*.log
+*.sqlite
+*.db
+bin/
+frontend/node_modules/
+dist/
+.DS_Store
+*.exe
+*.exe.manifest
+*.md5
+
+# Backup and History
+__history/
+*.~*
+*.bak

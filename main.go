@@ -7,6 +7,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	"PainelRelatorios/config"
 )
 
@@ -21,17 +22,23 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "PainelRelatorios",
-		Width:  1024,
-		Height: 768,
+		Title:  "Painel de Relatórios Corporativo",
+		Width:  1280,
+		Height: 800,
+		WindowStartState: options.Maximised,
+		Frameless:        false,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
+		BackgroundColour: &options.RGBA{R: 13, G: 13, B: 15, A: 1},
 		OnStartup:        app.startup,
 		OnShutdown:       app.shutdown,
 		Bind: []interface{}{
 			app,
+		},
+		Windows: &windows.Options{
+			IsZoomControlEnabled: false,
+			ZoomFactor:           1.0,
 		},
 	})
 

@@ -1,64 +1,85 @@
-.top-nav-bar {
-    background-color: var(--surface-container-lowest);
-    width: 100%;
+.app-header {
     height: 64px;
-    border-bottom: 1px solid var(--outline-variant);
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 0 var(--container-margin);
+    justify-content: space-between;
+    padding: 0 var(--spacing-xl);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    background: rgba(11, 13, 17, 0.8);
     position: sticky;
     top: 0;
-    z-index: 50;
+    z-index: 100;
 }
 
-.nav-left, .nav-right {
+.header-brand {
     display: flex;
     align-items: center;
-    gap: var(--stack-default);
+    gap: 12px;
 }
 
-.nav-center {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: var(--stack-default);
-}
-
-.app-title {
-    font-size: 20px;
-    line-height: 28px;
-    font-weight: 700;
-    color: var(--primary);
-    letter-spacing: -0.01em;
-}
-
-.avatar-container {
+.brand-logo {
     width: 32px;
     height: 32px;
-    border-radius: var(--radius-default);
-    background-color: var(--surface-container-high);
-    border: 1px solid var(--outline-variant);
-    overflow: hidden;
-    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--primary), #818cf8);
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 0 20px var(--primary-glow);
 }
 
-.avatar {
-    width: 100%;
-    height: 100%;
+.brand-logo svg {
+    width: 18px;
+    height: 18px;
+    color: white;
+}
+
+.brand-name {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-main);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.user-profile:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.user-avatar {
+    width: 24px;
+    height: 24px;
+    background: #475569;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--primary-container);
-    color: var(--on-primary-container);
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
 }
 
-.avatar-initial {
-    font-size: 14px;
-    font-weight: 600;
+.user-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
 }

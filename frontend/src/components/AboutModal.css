@@ -1,0 +1,99 @@
+.about-overlay {
+    z-index: 2000;
+}
+
+.about-content {
+    max-width: 450px;
+    padding: 32px;
+    text-align: center;
+    border-radius: 24px;
+    background: var(--bg-card);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border);
+}
+
+.about-header {
+    margin-bottom: 24px;
+}
+
+.about-logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 4px 12px rgba(var(--primary-rgb), 0.3));
+}
+
+.about-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text-main);
+}
+
+.about-header .version {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.about-body {
+    text-align: left;
+    margin-bottom: 32px;
+}
+
+.about-body section {
+    margin-bottom: 20px;
+}
+
+.about-body h3 {
+    font-size: 1rem;
+    margin-bottom: 8px;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.about-body p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.credits-list {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+}
+
+.credit-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.credit-label {
+    color: var(--text-muted);
+}
+
+.credit-item a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+.credit-item a:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+.about-footer {
+    display: flex;
+    justify-content: center;
+}
+
+.about-footer .btn {
+    padding: 10px 40px;
+    border-radius: 12px;
+}

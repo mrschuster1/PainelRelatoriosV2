@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+
 	"github.com/joho/godotenv"
 )
 
@@ -10,6 +11,6 @@ import (
 func LoadEnv() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("No .env file found or error loading it, using system environment variables.")
+		log.Println("Arquivo de configuração .env não econtrado.")
 	}
 }
