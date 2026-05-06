@@ -2,12 +2,17 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"log"
+
+	"PainelRelatorios/database"
 )
 
 // App struct
 type App struct {
 	ctx context.Context
+	db  *sql.DB
 }
 
 // NewApp creates a new App application struct
@@ -19,6 +24,20 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+
+	db, err := database.Connect()
+	if err != nil {
+		log.Printf("Database connection error: %v\n", err)
+	}
+	a.db = db
+}
+
+// shutdown is called when the app closes
+func (a *App) shutdown(ctx context.Context) {
+	if a.db != nil {
+		a.db.Close()
+		log.Println("Database connection closed.")
+	}
 }
 
 // Greet returns a greeting for the given name

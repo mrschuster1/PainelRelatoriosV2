@@ -14,7 +14,7 @@
 ## Phases
 
 ### Phase 1: Foundation
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
 **Objective**: Inicializar o projeto Wails, definir a estrutura de pastas e configurar a biblioteca de conexão com o banco MySQL 5.
 
 ### Phase 2: Core Data (Backend)
