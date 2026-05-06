@@ -231,7 +231,7 @@ export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate }: F
     const savePreset = async () => {
         if (!presetName.trim()) return;
         try {
-            await SaveFilterPreset(presetName, formatFilters(filters) as any);
+            await SaveFilterPreset(presetName, filters as any);
             await loadPresetsFromDB();
             setPresetName('');
         } catch (err) {
@@ -239,10 +239,34 @@ export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate }: F
         }
     };
 
+
     const loadPreset = (p: {name: string, filters: FilterParams}) => {
-        setFilters(p.filters);
-        onFilterChange(formatFilters(p.filters));
+        // Normaliza os filtros para garantir que campos multi-select sejam arrays de objetos
+        const ensureOptions = (list: any[]) => {
+            if (!list || !Array.isArray(list)) return [];
+            return list.map(item => {
+                if (typeof item === 'object' && item !== null && 'id' in item) {
+                    return item as LookupOption;
+                }
+                return { id: String(item), label: String(item) } as LookupOption;
+            });
+        };
+
+        const normalizedFilters: FilterParams = {
+            ...p.filters,
+            atendentes: ensureOptions(p.filters.atendentes),
+            clientes: ensureOptions(p.filters.clientes),
+            sistemas: ensureOptions(p.filters.sistemas),
+            categorias: ensureOptions(p.filters.categorias),
+            setores: ensureOptions(p.filters.setores),
+            acoes: ensureOptions(p.filters.acoes),
+            unidades: ensureOptions(p.filters.unidades)
+        };
+
+        setFilters(normalizedFilters);
+        onFilterChange(formatFilters(normalizedFilters));
     };
+
 
     const deletePreset = async (name: string) => {
         try {
@@ -254,17 +278,23 @@ export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate }: F
     };
 
     const formatFilters = (f: FilterParams) => {
+        const getIds = (list: any[]) => {
+            if (!list || !Array.isArray(list)) return [];
+            return list.map(item => (typeof item === 'object' && item !== null) ? item.id : item);
+        };
+
         return {
             ...f,
-            atendentes: f.atendentes.map(o => o.id),
-            clientes: f.clientes.map(o => o.id),
-            sistemas: f.sistemas.map(o => o.id),
-            categorias: f.categorias.map(o => o.id),
-            setores: f.setores.map(o => o.id),
-            acoes: f.acoes.map(o => o.id),
-            unidades: f.unidades.map(o => o.id)
+            atendentes: getIds(f.atendentes),
+            clientes: getIds(f.clientes),
+            sistemas: getIds(f.sistemas),
+            categorias: getIds(f.categorias),
+            setores: getIds(f.setores),
+            acoes: getIds(f.acoes),
+            unidades: getIds(f.unidades)
         };
     };
+
 
     const handleApply = () => {
         onFilterChange(formatFilters(filters));

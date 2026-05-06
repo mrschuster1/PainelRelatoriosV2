@@ -1,13 +1,13 @@
-# Painel de Relatórios V2
+# PainelRelatoriosV2 — Analytics & Reporting Dashboard
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Wails](https://img.shields.io/badge/built%20with-Wails-red.svg)
 ![React](https://img.shields.io/badge/frontend-React-61dafb.svg)
 ![Go](https://img.shields.io/badge/backend-Go-00add8.svg)
 
-Um painel de relatórios moderno e profissional, desenvolvido com **Wails**, **Go** e **React (TypeScript)**. Projetado para oferecer uma experiência de análise de dados fluida, com foco em performance, estética premium e ferramentas avançadas de exportação.
+Uma solução empresarial de alta performance para gestão, análise e exportação de atendimentos. Desenvolvido com uma arquitetura moderna unindo a robustez do **Go** no backend com a flexibilidade do **React** no frontend, entregando uma aplicação desktop nativa leve e poderosa.
 
-## 🚀 Funcionalidades
+## 🚀 Funcionalidades Principais
 
 - **DataGrid Avançado**: Visualização de grandes volumes de dados com suporte a agrupamento dinâmico.
 - **Filtros Inteligentes**: Painel de filtros avançado com suporte a salvamento de presets personalizados.

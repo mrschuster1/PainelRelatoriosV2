@@ -7,8 +7,9 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 
-	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	"PainelRelatorios/config"
+
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
 //go:embed all:frontend/dist
@@ -22,9 +23,9 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "Painel de Relatórios Corporativo",
-		Width:  1280,
-		Height: 800,
+		Title:            "Painel de Relatórios",
+		Width:            1280,
+		Height:           800,
 		WindowStartState: options.Maximised,
 		Frameless:        false,
 		AssetServer: &assetserver.Options{

@@ -234,12 +234,13 @@ func (a *App) GetHistoricos(atendimentoID int) ([]models.HistoricoAtendimento, e
 }
 
 // SaveFilterPreset saves a named filter configuration to SQLite
-func (a *App) SaveFilterPreset(name string, filter models.AtendimentoFilter) error {
+func (a *App) SaveFilterPreset(name string, filter interface{}) error {
 	if a.settingsRepo == nil {
 		return fmt.Errorf("repositório de configurações não inicializado")
 	}
 	return a.settingsRepo.SaveFilterPreset(name, filter)
 }
+
 
 // GetFilterPresets returns all saved filter configurations
 func (a *App) GetFilterPresets() ([]repository.FilterPreset, error) {
