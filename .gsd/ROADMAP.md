@@ -18,11 +18,11 @@
 **Objective**: Inicializar o projeto Wails, definir a estrutura de pastas e configurar a biblioteca de conexão com o banco MySQL 5.
 
 ### Phase 2: Core Data (Backend)
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
 **Objective**: Criar os repositórios em Go para conectar ao banco, mapear as entidades de "Atendimentos" e implementar a query dinâmica que aceita múltiplos filtros.
 
 ### Phase 3: UI & Grid (Frontend)
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
 **Objective**: Desenvolver a interface no Wails (escolher um framework web como React/Svelte), criar o painel de filtros e implementar a tabela de dados (Grid) com paginação/scroll infinito.
 
 ### Phase 4: Exports (Excel & PDF)
