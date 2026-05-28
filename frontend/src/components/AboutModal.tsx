@@ -13,9 +13,10 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
         <div className="modal-overlay about-overlay" onClick={onClose}>
             <div className="modal-content about-content" onClick={e => e.stopPropagation()}>
                 <div className="about-header">
-                    <img src={iconLogo} alt="App Icon" className="about-logo" />
-                    <h2>Painel de Relatórios V2</h2>
-                    <p className="version">Versão 2.1.0</p>
+                    <div className="about-logo-container">
+                        <img src={iconLogo} alt="App Icon" className="about-logo" />
+                    </div>
+                    <h2>Painel Relatórios</h2>
                 </div>
                 
                 <div className="about-body">

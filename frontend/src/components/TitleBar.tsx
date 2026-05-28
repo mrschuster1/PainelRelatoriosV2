@@ -18,7 +18,7 @@ export function TitleBar() {
                 <div className="app-logo-mini">
                     <img src={iconLogo} alt="Logo" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
                 </div>
-                <span className="app-title-mini">Painel de Relatórios</span>
+                <span className="app-title-mini">Painel Relatórios</span>
             </div>
             
             <div className="title-bar-center">

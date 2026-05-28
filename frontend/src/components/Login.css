@@ -1,0 +1,360 @@
+.login-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-deep);
+    overflow: hidden;
+    z-index: 9999;
+    font-family: var(--font-sans);
+    transition: background 0.5s ease;
+}
+
+/* Dynamic Animated Background */
+.login-background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.blob {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.4) 0%, rgba(147, 51, 234, 0.4) 100%);
+    filter: blur(80px);
+    border-radius: 50%;
+    animation: move 25s infinite alternate;
+}
+
+.theme-light .blob {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
+}
+
+.blob:nth-child(1) {
+    top: -100px;
+    right: -100px;
+}
+
+.blob:nth-child(2) {
+    bottom: -150px;
+    left: -100px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(59, 130, 246, 0.3) 100%);
+    animation-duration: 30s;
+    animation-delay: -5s;
+}
+
+.theme-light .blob:nth-child(2) {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%);
+}
+
+.blob:nth-child(3) {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
+    animation-duration: 35s;
+    animation-delay: -10s;
+}
+
+.theme-light .blob:nth-child(3) {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+}
+
+@keyframes move {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(100px, 100px) scale(1.1); }
+}
+
+/* Theme Toggle */
+.login-theme-toggle {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+}
+
+.theme-light .login-theme-toggle {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    color: #1e293b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.login-theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+.theme-light .login-theme-toggle:hover {
+    background: #fff;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Login Card */
+.login-card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    padding: 40px;
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.8s ease-out;
+    transition: all 0.5s ease;
+}
+
+.theme-light .login-card {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.login-logo {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+}
+
+.login-header h1 {
+    color: #f8fafc;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -0.025em;
+    transition: color 0.3s;
+}
+
+.theme-light .login-header h1 {
+    color: #0f172a;
+}
+
+.login-header p {
+    color: #94a3b8;
+    font-size: 15px;
+}
+
+.theme-light .login-header p {
+    color: #64748b;
+}
+
+/* Form */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.login-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    padding: 12px 16px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    color: #cbd5e1;
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 4px;
+    transition: color 0.3s;
+}
+
+.theme-light .form-group label {
+    color: #475569;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    color: #64748b;
+    transition: color 0.3s;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 14px 14px 14px 44px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    color: #f8fafc;
+    font-size: 16px;
+    transition: all 0.3s;
+    outline: none;
+}
+
+.theme-light .input-wrapper input {
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #0f172a;
+}
+
+.input-wrapper input:focus {
+    border-color: var(--primary);
+    background: rgba(15, 23, 42, 0.8);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.theme-light .input-wrapper input:focus {
+    background: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+}
+
+.input-wrapper input:focus + .input-icon {
+    color: var(--primary);
+}
+
+/* Fix Autofill background issues - Very aggressive to override Chrome's default */
+.input-wrapper input:-webkit-autofill,
+.input-wrapper input:-webkit-autofill:hover, 
+.input-wrapper input:-webkit-autofill:focus, 
+.input-wrapper input:-webkit-autofill:active {
+    /* Match the input background exactly - darker than card but with same hue */
+    -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    caret-color: #f8fafc !important;
+    transition: background-color 999999s ease-in-out 0s;
+}
+
+.theme-light .input-wrapper input:-webkit-autofill,
+.theme-light .input-wrapper input:-webkit-autofill:hover, 
+.theme-light .input-wrapper input:-webkit-autofill:focus, 
+.theme-light .input-wrapper input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #f8fafc inset !important;
+    -webkit-text-fill-color: #0f172a !important;
+    caret-color: #0f172a !important;
+    transition: background-color 999999s ease-in-out 0s;
+}
+
+.btn-login {
+    margin-top: 10px;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 25px -5px rgba(37, 99, 235, 0.5);
+    filter: brightness(1.1);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+.btn-login:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.login-footer {
+    margin-top: 32px;
+    text-align: center;
+}
+
+.login-footer p {
+    color: #64748b;
+    font-size: 12px;
+}
+
+/* Loading Spinner */
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .login-card {
+        padding: 30px 20px;
+        margin: 20px;
+    }
+    
+    .login-header h1 {
+        font-size: 24px;
+    }
+}

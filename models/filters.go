@@ -11,8 +11,11 @@ type AtendimentoFilter struct {
 	Setores    []string `json:"setores"`
 	Acoes      []string `json:"acoes"` // Multiple actions/status
 	Unidades   []string `json:"unidades"`
-	GroupBy    string   `json:"groupBy"`
+	Groups     []string `json:"groups"`
+	SortField  string   `json:"sortField"`
+	SortOrder  string   `json:"sortOrder"`
 }
+
 
 type LookupOption struct {
 	ID    string `json:"id"`

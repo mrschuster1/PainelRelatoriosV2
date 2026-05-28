@@ -3,17 +3,23 @@
 import {models} from '../models';
 import {repository} from '../models';
 
-export function DeleteFilterPreset(arg1:string):Promise<void>;
+export function DeleteFilterPreset(arg1:string,arg2:number):Promise<void>;
 
 export function ExportAtendimentosExcel(arg1:models.AtendimentoFilter):Promise<string>;
 
 export function ExportAtendimentosPDF(arg1:models.AtendimentoFilter):Promise<string>;
+
+export function ExportSummaryExcel(arg1:models.AtendimentoFilter,arg2:string):Promise<string>;
+
+export function ExportSummaryPDF(arg1:models.AtendimentoFilter,arg2:string):Promise<string>;
 
 export function GetAcoes():Promise<Array<models.LookupOption>>;
 
 export function GetAnalistas():Promise<Array<models.LookupOption>>;
 
 export function GetAtendimentos(arg1:models.AtendimentoFilter):Promise<Array<models.Atendimento>>;
+
+export function GetAtendimentosPDFBase64(arg1:models.AtendimentoFilter):Promise<string>;
 
 export function GetCategorias():Promise<Array<models.LookupOption>>;
 
@@ -25,17 +31,25 @@ export function GetSetores():Promise<Array<models.LookupOption>>;
 
 export function GetSistemas():Promise<Array<models.LookupOption>>;
 
+export function GetSummaryPDFBase64(arg1:models.AtendimentoFilter,arg2:string):Promise<string>;
+
 export function GetUnidades():Promise<Array<models.LookupOption>>;
 
 export function Greet(arg1:string):Promise<string>;
 
 export function IsDatabaseConfigured():Promise<boolean>;
 
+export function Login(arg1:string,arg2:string):Promise<models.User>;
+
 export function OpenFile(arg1:string):Promise<void>;
+
+export function PreviewAtendimentosPDF(arg1:models.AtendimentoFilter):Promise<void>;
+
+export function PreviewSummaryPDF(arg1:models.AtendimentoFilter,arg2:string):Promise<void>;
 
 export function SaveDatabaseConfig(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<string>;
 
-export function SaveFilterPreset(arg1:string,arg2:models.AtendimentoFilter):Promise<void>;
+export function SaveFilterPreset(arg1:string,arg2:any,arg3:number,arg4:string):Promise<void>;
 
 export function SearchClientes(arg1:string):Promise<Array<models.LookupOption>>;
 

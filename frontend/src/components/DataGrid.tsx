@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect, useDeferredValue } from 'react';
+import { normalizeString, createAccentRegexPattern, fuzzyMatchWord } from '../utils/search';
+
 import './DataGrid.css';
 import {
   useReactTable,
@@ -12,17 +14,18 @@ import {
   SortingState,
   GroupingState,
   ExpandedState,
+  VisibilityState,
 } from '@tanstack/react-table';
 import { GetHistoricos } from '../../wailsjs/go/main/App';
-import { History, X, Minus, Plus, Layers, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, ChevronRight, Hash } from 'lucide-react';
+import { History, X, Minus, Plus, Layers, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, ChevronRight, Hash, Settings } from 'lucide-react';
 import { models } from '../../wailsjs/go/models';
 
-interface HistoryModalProps {
+interface DetailsDrawerProps {
   atendimento: models.Atendimento;
   onClose: () => void;
 }
 
-function HistoryModal({ atendimento, onClose }: HistoryModalProps) {
+function DetailsDrawer({ atendimento, onClose }: DetailsDrawerProps) {
   const [historicos, setHistoricos] = useState<models.HistoricoAtendimento[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,30 +44,88 @@ function HistoryModal({ atendimento, onClose }: HistoryModalProps) {
   }, [atendimento.id]);
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>Histórico Completo - Atendimento #{atendimento.id}</h3>
-          <button className="modal-close" onClick={onClose}><X size={20} /></button>
+    <div className="drawer-overlay" onClick={onClose}>
+      <div className="drawer-content" onClick={e => e.stopPropagation()}>
+        <div className="drawer-header">
+          <div className="header-title-group">
+            <h3>Atendimento #{atendimento.id}</h3>
+            <span className="badge badge-open" style={{ marginLeft: '12px' }}>
+              {atendimento.fechado ? 'Fechado' : 'Aberto'}
+            </span>
+          </div>
+          <button className="drawer-close" onClick={onClose}><X size={20} /></button>
         </div>
-        <div className="modal-body">
-          {loading ? (
-            <div className="loading-spinner">Carregando históricos...</div>
-          ) : historicos.length === 0 ? (
-            <div className="empty-history">Nenhum histórico detalhado encontrado.</div>
-          ) : (
-            <div className="history-list">
-              {historicos.map((h, i) => (
-                <div key={i} className="history-item">
-                  <div className="history-item-header">
-                    <span className="history-date">{new Date(h.data).toLocaleDateString('pt-BR')} {h.hora}</span>
-                    <span className="history-action">{h.histAcao}</span>
-                  </div>
-                  <div className="history-item-text">{h.historico}</div>
-                </div>
-              ))}
+        
+        <div className="drawer-body">
+          {/* General Information */}
+          <div className="detail-section">
+            <div className="detail-section-title">Informações do Registro</div>
+            <div className="detail-grid">
+              <div className="detail-item full-width">
+                <span className="detail-label">Cliente</span>
+                <span className="detail-value">{atendimento.cliente}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Pessoa / Contato</span>
+                <span className="detail-value">{atendimento.pessoa || 'Não Informado'}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Sistema</span>
+                <span className="detail-value">{atendimento.sistema || 'Não Informado'}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Categoria</span>
+                <span className="detail-value">{atendimento.categoria || 'Não Informado'}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Setor / Célula</span>
+                <span className="detail-value">{atendimento.setor || 'Não Informado'}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Ação Realizada</span>
+                <span className="detail-value">{atendimento.acao || 'Não Informado'}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Responsável</span>
+                <span className="detail-value">{atendimento.atendente}</span>
+              </div>
             </div>
-          )}
+          </div>
+
+          {/* History Timeline */}
+          <div className="detail-section">
+            <div className="detail-section-title">Linha do Tempo (Histórico)</div>
+            <div className="history-timeline">
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="history-node loading">
+                    <div className="node-header">
+                      <div className="loading-pulse" style={{ width: '80px' }} />
+                      <div className="loading-pulse" style={{ width: '60px' }} />
+                    </div>
+                    <div className="node-content">
+                      <div className="loading-pulse" style={{ width: '100%' }} />
+                    </div>
+                  </div>
+                ))
+              ) : historicos.length === 0 ? (
+                <div className="empty-history">Nenhum registro de histórico encontrado.</div>
+              ) : (
+                historicos.map((h, i) => (
+                  <div key={h.id || i} className="history-node">
+                    <div className="node-header">
+                      <div className="node-time-group">
+                        <span className="node-date">{h.data.split('-').reverse().join('/')}</span>
+                        <span className="node-hour">{h.hora.substring(0, 5)}</span>
+                      </div>
+                      <span className="node-action">{h.histAcao}</span>
+                    </div>
+                    <div className="node-content">{h.historico}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -112,67 +173,11 @@ interface DataGridProps {
   setSearchTerm: (val: string) => void;
   showFilters: boolean;
   onToggleFilters: () => void;
-  onGroupingChange?: (groupBy: string) => void;
+  onGroupingChange?: (groups: string[]) => void;
+  onSortingChange?: (sorting: SortingState) => void;
+  onSortByCountChange?: (sortByCount: boolean) => void;
 }
 
-const normalizeString = (str: string) => {
-  if (!str) return '';
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-};
-
-const createAccentRegexPattern = (term: string) => {
-  return term
-    .replace(/[aáàãâä]/gi, '[aáàãâäAÁÀÃÂÄ]')
-    .replace(/[eéèêë]/gi, '[eéèêëEÉÈÊË]')
-    .replace(/[iíìîï]/gi, '[iíìîïIÍÌÎÏ]')
-    .replace(/[oóòõôö]/gi, '[oóòõôöOÓÒÕÔÖ]')
-    .replace(/[uúùûü]/gi, '[uúùûüUÚÙÛÜ]')
-    .replace(/[cç]/gi, '[cçCÇ]');
-};
-
-function levenshtein(a: string, b: string): number {
-  if (a.length === 0) return b.length;
-  if (b.length === 0) return a.length;
-  
-  let prevRow = new Int32Array(b.length + 1);
-  for (let j = 0; j <= b.length; j++) prevRow[j] = j;
-  let curRow = new Int32Array(b.length + 1);
-
-  for (let i = 1; i <= a.length; i++) {
-    curRow[0] = i;
-    for (let j = 1; j <= b.length; j++) {
-      let cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      curRow[j] = Math.min(
-        curRow[j - 1] + 1,
-        prevRow[j] + 1,
-        prevRow[j - 1] + cost
-      );
-    }
-    let temp = prevRow;
-    prevRow = curRow;
-    curRow = temp;
-  }
-  return prevRow[b.length];
-}
-
-function fuzzyMatchWord(searchWord: string, targetString: string): boolean {
-    if (targetString.includes(searchWord)) return true;
-    
-    // Only apply true fuzzy for words longer than 3 chars to avoid noise
-    if (searchWord.length <= 3) return false;
-    
-    const targetWords = targetString.split(/\s+/);
-    const tolerance = searchWord.length >= 6 ? 2 : 1;
-    
-    for (const tw of targetWords) {
-        if (Math.abs(tw.length - searchWord.length) <= tolerance) {
-            if (levenshtein(searchWord, tw) <= tolerance) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
 
 export function DataGrid({ 
   atendimentos, 
@@ -181,7 +186,9 @@ export function DataGrid({
   setSearchTerm,
   showFilters,
   onToggleFilters,
-  onGroupingChange
+  onGroupingChange,
+  onSortingChange,
+  onSortByCountChange
 }: DataGridProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [grouping, setGrouping] = useState<GroupingState>([]);
@@ -189,15 +196,37 @@ export function DataGrid({
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [selectedAtendimento, setSelectedAtendimento] = useState<models.Atendimento | null>(null);
   const [sortByCount, setSortByCount] = useState(false);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
+    const saved = localStorage.getItem('reporting_columns');
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [showColumnMenu, setShowColumnMenu] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('reporting_columns', JSON.stringify(columnVisibility));
+  }, [columnVisibility]);
 
   // Use deferred value for the search term to prevent typing lag
   const deferredSearchTerm = useDeferredValue(searchTerm);
 
   useEffect(() => {
     if (onGroupingChange) {
-      onGroupingChange(grouping[0] || '');
+      onGroupingChange(grouping);
     }
   }, [grouping, onGroupingChange]);
+
+  useEffect(() => {
+    if (onSortingChange) {
+      onSortingChange(sorting);
+    }
+  }, [sorting, onSortingChange]);
+
+  useEffect(() => {
+    if (onSortByCountChange) {
+      onSortByCountChange(sortByCount);
+    }
+  }, [sortByCount, onSortByCountChange]);
+
 
   // Helper to highlight search term
   const highlightText = (text: string, highlight: string) => {
@@ -317,10 +346,12 @@ export function DataGrid({
       grouping,
       expanded,
       globalFilter: deferredSearchTerm,
+      columnVisibility,
     },
     onSortingChange: setSorting,
     onGroupingChange: setGrouping,
     onExpandedChange: setExpanded,
+    onColumnVisibilityChange: setColumnVisibility,
     columnResizeMode: 'onChange',
     defaultColumn: {
       minSize: 100,
@@ -490,26 +521,56 @@ export function DataGrid({
       </div>
 
       <div className="grid-header">
-        <div className="quick-groups">
-           <button 
-             className={`btn-group ${grouping.includes('cliente') ? 'active' : ''}`}
-             onClick={() => toggleGroup('cliente')}
-           >
-             Cliente
-           </button>
-           <button 
-             className={`btn-group ${grouping.includes('setor') ? 'active' : ''}`}
-             onClick={() => toggleGroup('setor')}
-           >
-             Setor
-           </button>
-           <button 
-             className={`btn-group ${grouping.includes('sistema') ? 'active' : ''}`}
-             onClick={() => toggleGroup('sistema')}
-           >
-             Sistema
-           </button>
-        </div>
+         <div className="quick-groups">
+            <button 
+              className={`btn-group ${grouping.includes('cliente') ? 'active' : ''}`}
+              onClick={() => toggleGroup('cliente')}
+            >
+              Cliente
+            </button>
+            <button 
+              className={`btn-group ${grouping.includes('setor') ? 'active' : ''}`}
+              onClick={() => toggleGroup('setor')}
+            >
+              Setor
+            </button>
+            <button 
+              className={`btn-group ${grouping.includes('sistema') ? 'active' : ''}`}
+              onClick={() => toggleGroup('sistema')}
+            >
+              Sistema
+            </button>
+         </div>
+
+         <div className="column-menu-container">
+            <button 
+              className={`btn-toolbar-action ${showColumnMenu ? 'active' : ''}`} 
+              onClick={() => setShowColumnMenu(!showColumnMenu)}
+              title="Gerenciar colunas"
+            >
+              <Settings size={16} />
+              Colunas
+            </button>
+            {showColumnMenu && (
+              <div className="column-menu" onMouseLeave={() => setShowColumnMenu(false)}>
+                <div className="column-menu-header">Visibilidade das Colunas</div>
+                {table.getAllLeafColumns().map(column => (
+                  <div 
+                    key={column.id} 
+                    className="column-item" 
+                    onClick={() => column.toggleVisibility()}
+                  >
+                    <input 
+                      type="checkbox" 
+                      checked={column.getIsVisible()} 
+                      onChange={() => {}} // Controlled by click on parent
+                    />
+                    <span>{column.id === 'historico_full' ? 'Ações' : column.columnDef.header as string}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+         </div>
         <div className="grid-summary-badge">
           <span className="summary-label">Total de Atendimentos</span>
           <span className="summary-value">
@@ -571,11 +632,15 @@ export function DataGrid({
           </thead>
           <tbody>
             {isLoading ? (
-              <tr>
-                <td colSpan={columns.length} className="loading-skeleton">
-                  CARREGANDO DADOS...
-                </td>
-              </tr>
+              Array.from({ length: 8 }).map((_, i) => (
+                <tr key={`skeleton-${i}`}>
+                  {table.getVisibleFlatColumns().map((column) => (
+                    <td key={column.id} className="shimmer-td">
+                      <div className="shimmer" style={{ height: '20px', borderRadius: '4px' }}></div>
+                    </td>
+                  ))}
+                </tr>
+              ))
             ) : table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length}>
@@ -587,7 +652,12 @@ export function DataGrid({
             ) : (
               table.getRowModel().rows.map((row) => (
                 <React.Fragment key={row.id}>
-                  <tr className={row.getIsGrouped() ? 'grouped-row' : ''}>
+                  <tr 
+                    key={row.id} 
+                    className={`data-row ${row.getIsExpanded() ? 'expanded' : ''} ${row.getIsGrouped() ? 'grouped-row' : ''}`}
+                    onClick={() => !row.getIsGrouped() && setSelectedAtendimento(row.original)}
+                    style={{ cursor: row.getIsGrouped() ? 'default' : 'pointer' }}
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id}>
                         {cell.getIsGrouped() ? (
@@ -630,7 +700,7 @@ export function DataGrid({
         </table>
       </div>
       {selectedAtendimento && (
-        <HistoryModal 
+        <DetailsDrawer 
           atendimento={selectedAtendimento} 
           onClose={() => setSelectedAtendimento(null)} 
         />

@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
+import { normalizeString, fuzzyMatchWord, calculateFuzzyScore, createAccentRegexPattern } from '../utils/search';
+
 import './FilterPanel.css';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { ptBR } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Calendar } from 'lucide-react';
+import { 
+    Calendar, Search, ChevronDown, Bookmark, 
+    Eye, EyeOff, Trash2, RotateCw, Plus, X as CloseIcon 
+} from 'lucide-react';
 import { 
     GetSistemas, GetAnalistas, GetCategorias, GetSetores, 
     GetAcoes, GetUnidades, SearchClientes,
@@ -11,11 +16,6 @@ import {
 } from '../../wailsjs/go/main/App';
 
 registerLocale('pt-BR', ptBR);
-
-const normalizeString = (str: string) => {
-    if (!str) return '';
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-};
 
 
 export interface FilterParams {
@@ -40,6 +40,7 @@ interface FilterPanelProps {
     initialFilters: FilterParams;
     onFilterChange: (filters: any) => void;
     onStateUpdate?: (filters: FilterParams) => void;
+    currentUser: any;
 }
 
 interface MultiSelectProps {
@@ -96,7 +97,8 @@ function MultiSelectDropdown({ label, options, selected, onToggle, placeholder =
                             if (!searchQuery) return true;
                             const searchTerms = normalizeString(searchQuery).trim().split(/\s+/).filter(Boolean);
                             const optLabel = normalizeString(opt.label);
-                            return searchTerms.every(term => optLabel.includes(term));
+                            return searchTerms.every(term => fuzzyMatchWord(term, optLabel));
+
                         }).map(opt => {
                             const isSelected = selected.find(s => s.id === opt.id);
                             return (
@@ -119,10 +121,9 @@ function MultiSelectDropdown({ label, options, selected, onToggle, placeholder =
     );
 }
 
-import { ChevronDown, Search, Bookmark, Trash2, Plus, Save } from 'lucide-react';
-
-export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate }: FilterPanelProps) {
+export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate, currentUser }: FilterPanelProps) {
     const [filters, setFilters] = useState<FilterParams>(initialFilters);
+    const [showAllFilters, setShowAllFilters] = useState(false);
 
     useEffect(() => {
         if (onStateUpdate) {
@@ -174,7 +175,18 @@ export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate }: F
         const timer = setTimeout(async () => {
             if (clientSearch.length > 1) {
                 const results = await SearchClientes(clientSearch);
-                const filtered = (results || []).filter(r => !filters.clientes.find(c => c.id === r.id));
+                let filtered = (results || []).filter(r => !filters.clientes.find(c => c.id === r.id));
+                
+                // Sort by fuzzy score to bring better matches to the top
+                const searchTerms = clientSearch.trim().split(/\s+/).filter(Boolean);
+                if (searchTerms.length > 0) {
+                    filtered.sort((a, b) => {
+                        const scoreA = searchTerms.reduce((acc, term) => acc + calculateFuzzyScore(term, a.label), 0);
+                        const scoreB = searchTerms.reduce((acc, term) => acc + calculateFuzzyScore(term, b.label), 0);
+                        return scoreB - scoreA;
+                    });
+                }
+                
                 setClientResults(filtered);
                 setShowResults(true);
             } else {
@@ -189,6 +201,9 @@ export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate }: F
         const handleClickOutside = (event: MouseEvent) => {
             if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
                 setShowResults(false);
+            }
+            if (presetRef.current && !presetRef.current.contains(event.target as Node)) {
+                setShowPresetSuggestions(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -206,8 +221,33 @@ export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate }: F
         });
     };
 
-    const [presets, setPresets] = useState<{name: string, filters: FilterParams}[]>([]);
+    const [presets, setPresets] = useState<{name: string, filters: FilterParams, user_id: number, user_name: string}[]>([]);
     const [presetName, setPresetName] = useState('');
+    const [showPresetSuggestions, setShowPresetSuggestions] = useState(false);
+    const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
+    const presetRef = useRef<HTMLDivElement>(null);
+    const presetInputRef = useRef<HTMLInputElement>(null);
+
+    // Highlight helper for search results
+    const highlightText = (text: string, highlight: string) => {
+        if (!highlight || !highlight.trim()) return text;
+        const terms = highlight.trim().split(/\s+/).filter(Boolean);
+        if (terms.length === 0) return text;
+        const regexPatterns = terms.map(t => createAccentRegexPattern(t));
+        const regex = new RegExp(`(${regexPatterns.join('|')})`, 'gi');
+        const parts = text.split(regex);
+        return (
+            <span>
+                {parts.map((part, i) => {
+                    const normPart = normalizeString(part);
+                    const isMatch = terms.some(term => normalizeString(term) === normPart);
+                    return isMatch ? (
+                        <mark key={i} className="search-highlight">{part}</mark>
+                    ) : part;
+                })}
+            </span>
+        );
+    };
 
     useEffect(() => {
         loadPresetsFromDB();
@@ -216,10 +256,12 @@ export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate }: F
     const loadPresetsFromDB = async () => {
         try {
             const saved = await GetFilterPresets();
-            if (saved && saved.length > 0) {
+            if (saved) {
                 const mappedPresets = saved.map(p => ({
                     name: p.name,
-                    filters: JSON.parse(p.filter_json)
+                    filters: JSON.parse(p.filter_json),
+                    user_id: p.user_id,
+                    user_name: p.user_name
                 }));
                 setPresets(mappedPresets);
             }
@@ -228,12 +270,33 @@ export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate }: F
         }
     };
 
-    const savePreset = async () => {
-        if (!presetName.trim()) return;
+    const savePreset = async (nameOverride?: string) => {
+        const nameToSave = nameOverride || presetName;
+        if (!nameToSave.trim()) return;
+
+        // Check if we are updating an existing preset (case-insensitive)
+        const existing = presets.find(p => p.name.toLowerCase() === nameToSave.toLowerCase());
+        
+        // Ownership check: if exists, must be owned by current user to allow update
+        if (existing && existing.user_id !== currentUser.Id) {
+            alert("Você não tem permissão para alterar este filtro, pois ele foi criado por outro usuário.");
+            return;
+        }
+
+        // Confirmation for overwriting existing preset
+        if (existing && existing.user_id === currentUser.Id) {
+            if (!window.confirm(`Deseja substituir o filtro "${existing.name}" existente?`)) {
+                return;
+            }
+        }
+
+        const finalName = existing ? existing.name : nameToSave;
+
         try {
-            await SaveFilterPreset(presetName, filters as any);
+            await SaveFilterPreset(finalName, filters as any, currentUser.Id, currentUser.Nome);
             await loadPresetsFromDB();
-            setPresetName('');
+            if (!nameOverride) setPresetName('');
+            setShowPresetSuggestions(false);
         } catch (err) {
             console.error("Erro ao salvar preset no SQLite:", err);
         }
@@ -264,13 +327,20 @@ export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate }: F
         };
 
         setFilters(normalizedFilters);
+        setPresetName(p.name);
         onFilterChange(formatFilters(normalizedFilters));
     };
 
 
     const deletePreset = async (name: string) => {
+        const preset = presets.find(p => p.name === name);
+        if (preset && preset.user_id !== currentUser.Id) {
+            alert("Você não tem permissão para excluir este filtro.");
+            return;
+        }
+
         try {
-            await DeleteFilterPreset(name);
+            await DeleteFilterPreset(name, currentUser.Id);
             await loadPresetsFromDB();
         } catch (err) {
             console.error("Erro ao deletar preset no SQLite:", err);
@@ -398,7 +468,7 @@ export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate }: F
                                                 setShowResults(false);
                                             }}
                                         >
-                                            {opt.label}
+                                            {highlightText(opt.label, clientSearch)}
                                         </div>
                                     ))
                                 ) : (
@@ -456,41 +526,177 @@ export function FilterPanel({ initialFilters, onFilterChange, onStateUpdate }: F
             {/* Presets Section */}
             <div className="presets-section">
                 <div className="presets-header">
-                    <Bookmark size={14} className="header-icon" />
-                    <span>Filtros Salvos</span>
+                    <div className="presets-title">
+                        <Bookmark size={14} className="header-icon" />
+                        <span>Filtros Salvos</span>
+                    </div>
+                    <button 
+                        className={`btn-show-all ${showAllFilters ? 'active' : ''}`}
+                        onClick={() => setShowAllFilters(!showAllFilters)}
+                        title={showAllFilters ? "Mostrar apenas meus filtros" : "Mostrar todos os filtros"}
+                    >
+                        {showAllFilters ? <Eye size={14} /> : <EyeOff size={14} />}
+                        <span>{showAllFilters ? "Todos" : "Apenas meus"}</span>
+                    </button>
                 </div>
                 
                 <div className="presets-container">
                     <div className="presets-list">
-                        {presets.map((p, i) => (
-                            <div key={i} className="preset-pill">
-                                <span className="preset-name" onClick={() => loadPreset(p)}>
-                                    {p.name}
-                                </span>
-                                <button className="btn-delete-preset" onClick={(e) => { e.stopPropagation(); deletePreset(p.name); }} title="Excluir filtro">
-                                    <Trash2 size={12} />
-                                </button>
-                            </div>
-                        ))}
-                        {presets.length === 0 && <span className="no-presets">Nenhum filtro salvo ainda.</span>}
+                        {presets
+                            .filter(p => showAllFilters || p.user_id === currentUser.Id)
+                            .map((p, i) => {
+                                const isActive = presetName === p.name;
+                                const isOwner = p.user_id === currentUser.Id;
+                                return (
+                                    <div key={i} className={`preset-pill ${isActive ? 'active' : ''} ${!isOwner ? 'other-owner' : ''}`}>
+                                        <span className="preset-name" onClick={() => loadPreset(p)}>
+                                            {p.name}
+                                            {!isOwner && <span className="owner-label">({p.user_name})</span>}
+                                        </span>
+                                        {isOwner && (
+                                            <button className="btn-delete-preset" onClick={(e) => { e.stopPropagation(); deletePreset(p.name); }} title="Excluir filtro">
+                                                <Trash2 size={12} />
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        {presets.filter(p => showAllFilters || p.user_id === currentUser.Id).length === 0 && (
+                            <span className="no-presets">
+                                {showAllFilters ? "Nenhum filtro salvo ainda." : "Você não tem filtros salvos."}
+                            </span>
+                        )}
                     </div>
 
                     <div className="save-preset-container">
                         <div className="save-input-group">
-                            <div className="save-input-wrapper">
+                            <div className="save-input-wrapper" ref={presetRef}>
                                 <Bookmark size={14} className="input-icon" />
                                 <input 
+                                    ref={presetInputRef}
                                     type="text" 
                                     placeholder="Nome do novo filtro..." 
                                     value={presetName}
-                                    onChange={(e) => setPresetName(e.target.value)}
+                                    onChange={(e) => {
+                                        setPresetName(e.target.value);
+                                        setShowPresetSuggestions(true);
+                                        setHighlightedSuggestion(-1);
+                                    }}
+                                    onFocus={() => setShowPresetSuggestions(true)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'ArrowDown') {
+                                            setHighlightedSuggestion(prev => Math.min(prev + 1, presets.length - 1));
+                                            e.preventDefault();
+                                        } else if (e.key === 'ArrowUp') {
+                                            setHighlightedSuggestion(prev => Math.max(prev - 1, -1));
+                                            e.preventDefault();
+                                        } else if (e.key === 'Enter' && highlightedSuggestion >= 0) {
+                                            const filteredPresets = presets
+                                                .map(p => ({ ...p, score: presetName ? calculateFuzzyScore(presetName, p.name) : 1 }))
+                                                .filter(p => p.score > 0)
+                                                .sort((a, b) => b.score - a.score);
+                                            
+                                            if (filteredPresets[highlightedSuggestion]) {
+                                                setPresetName(filteredPresets[highlightedSuggestion].name);
+                                                setShowPresetSuggestions(false);
+                                            }
+                                        }
+                                    }}
                                     className="save-preset-input"
                                 />
+                                <button 
+                                    className="btn-dropdown-suggestions"
+                                    onClick={() => {
+                                        setShowPresetSuggestions(!showPresetSuggestions);
+                                        if (!showPresetSuggestions) presetInputRef.current?.focus();
+                                    }}
+                                    title="Ver filtros existentes"
+                                >
+                                    <ChevronDown size={14} />
+                                </button>
+                                {presetName && (
+                                    <button 
+                                        className="btn-clear-preset-name" 
+                                        onClick={() => { setPresetName(''); setShowPresetSuggestions(true); presetInputRef.current?.focus(); }}
+                                        title="Limpar nome"
+                                    >
+                                        <CloseIcon size={12} />
+                                    </button>
+                                )}
+                                
+                                {showPresetSuggestions && (
+                                    <div className="preset-suggestions">
+                                        <div className="suggestions-header">Selecione para substituir</div>
+                                        {presets.length > 0 ? (() => {
+                                            const filtered = presets
+                                                .map(p => ({ ...p, score: presetName ? calculateFuzzyScore(presetName, p.name) : 1 }))
+                                                .filter(p => p.score > 0)
+                                                .sort((a, b) => b.score - a.score);
+                                            
+                                            if (filtered.length === 0) return <div className="suggestion-item disabled">Nenhum filtro correspondente</div>;
+
+                                            return filtered.map((p, i) => {
+                                                const isOwner = p.user_id === currentUser.Id;
+                                                return (
+                                                    <div 
+                                                        key={i} 
+                                                        className={`suggestion-item ${highlightedSuggestion === i ? 'highlighted' : ''} ${!isOwner ? 'other-owner' : ''}`}
+                                                        onClick={() => {
+                                                            setPresetName(p.name);
+                                                            setShowPresetSuggestions(false);
+                                                        }}
+                                                    >
+                                                        <div className="suggestion-content">
+                                                            <Bookmark size={12} style={{ opacity: 0.5 }} />
+                                                            <div className="suggestion-text">
+                                                                <span>{highlightText(p.name, presetName)}</span>
+                                                                {!isOwner && <span className="owner-tag">{p.user_name}</span>}
+                                                            </div>
+                                                        </div>
+                                                        {isOwner && (
+                                                            <button 
+                                                                className="quick-replace-btn"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    savePreset(p.name);
+                                                                }}
+                                                                title={`Substituir "${p.name}"`}
+                                                            >
+                                                                <RotateCw size={12} />
+                                                                <span>Substituir</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            });
+                                        })() : (
+                                            <div className="suggestion-item disabled">Nenhum filtro salvo</div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
-                            <button className="btn-save-action" onClick={savePreset} disabled={!presetName.trim()}>
-                                <Plus size={16} />
-                                <span>Salvar Filtro</span>
-                            </button>
+                            {(() => {
+                                const existing = presets.find(p => p.name.toLowerCase() === presetName.toLowerCase());
+                                const isForbidden = existing && existing.user_id !== currentUser.Id;
+                                const isUpdate = existing && existing.user_id === currentUser.Id;
+                                
+                                return (
+                                    <button 
+                                        className={`btn-save-action ${isUpdate ? 'update' : ''} ${isForbidden ? 'forbidden' : ''}`} 
+                                        onClick={() => savePreset()} 
+                                        disabled={!presetName.trim() || isForbidden}
+                                        title={isForbidden ? "Este nome já está sendo usado por outro usuário" : ""}
+                                    >
+                                        {isForbidden ? (
+                                            <><CloseIcon size={16} /> <span>Nome Indisponível</span></>
+                                        ) : isUpdate ? (
+                                            <><RotateCw size={16} /> <span>Atualizar Filtro</span></>
+                                        ) : (
+                                            <><Plus size={16} /> <span>Salvar Filtro</span></>
+                                        )}
+                                    </button>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>

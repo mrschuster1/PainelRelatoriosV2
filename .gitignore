@@ -1,6 +1,7 @@
 build/bin
 node_modules
 frontend/dist
+frontend/vite.config.ts.timestamp-*.mjs
 .env
 .env.local
 .env.*.local
@@ -30,6 +31,7 @@ bin/
 frontend/node_modules/
 dist/
 .DS_Store
+.vscode/
 *.exe
 *.exe.manifest
 *.md5

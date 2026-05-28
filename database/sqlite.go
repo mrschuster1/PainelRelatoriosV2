@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"PainelRelatorios/config"
 
 	_ "modernc.org/sqlite"
 )
@@ -11,7 +12,7 @@ import (
 // ConnectSQLite initializes and returns a connection to the local SQLite database
 func ConnectSQLite() (*sql.DB, error) {
 	// The database file will be created in the current working directory
-	dbPath := "settings.db"
+	dbPath := config.GetSQLitePath()
 	
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
@@ -55,6 +56,11 @@ func MigrateSQLite(db *sql.DB) error {
 				filter_json TEXT,
 				created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 			);`,
+		},
+		{
+			name: "add_user_to_filter_presets",
+			sql: `ALTER TABLE filter_presets ADD COLUMN user_id INTEGER;
+				  ALTER TABLE filter_presets ADD COLUMN user_name TEXT;`,
 		},
 	}
 

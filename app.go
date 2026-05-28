@@ -3,8 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"log"
+	"os"
+	"os/exec"
+	"strings"
 	"time"
 
 	"PainelRelatorios/config"
@@ -12,8 +16,6 @@ import (
 	"PainelRelatorios/models"
 	"PainelRelatorios/repository"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"os"
-	"os/exec"
 )
 
 // App struct
@@ -23,6 +25,7 @@ type App struct {
 	sqliteDB         *sql.DB
 	atendimentosRepo *repository.AtendimentoRepository
 	settingsRepo     *repository.SettingsRepository
+	userRepo         *repository.UserRepository
 }
 
 // NewApp creates a new App application struct
@@ -42,6 +45,7 @@ func (a *App) startup(ctx context.Context) {
 	}
 	a.db = db
 	a.atendimentosRepo = repository.NewAtendimentoRepository(a.db)
+	a.userRepo = repository.NewUserRepository(a.db)
 
 	// Connect to local SQLite DB for settings
 	sqldb, err := database.ConnectSQLite()
@@ -126,6 +130,124 @@ func (a *App) ExportAtendimentosPDF(filter models.AtendimentoFilter) (string, er
 	return path, nil
 }
 
+// PreviewAtendimentosPDF generates a temporary PDF and opens it
+func (a *App) PreviewAtendimentosPDF(filter models.AtendimentoFilter) error {
+	data, err := a.atendimentosRepo.FetchAtendimentos(filter)
+	if err != nil {
+		return fmt.Errorf("erro ao buscar dados: %v", err)
+	}
+
+	tempPath := os.TempDir() + fmt.Sprintf("/preview_atendimentos_%d.pdf", time.Now().Unix())
+	
+	err = repository.ExportAtendimentosToPDF(data, filter, tempPath)
+	if err != nil {
+		return fmt.Errorf("erro ao gerar PDF: %v", err)
+	}
+
+	return a.OpenFile(tempPath)
+}
+
+// ExportSummaryExcel exports a summary grouped by the specified field to an Excel file
+func (a *App) ExportSummaryExcel(filter models.AtendimentoFilter, groupField string) (string, error) {
+	data, err := a.atendimentosRepo.FetchAtendimentos(filter)
+	if err != nil {
+		return "", fmt.Errorf("erro ao buscar dados: %v", err)
+	}
+
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           fmt.Sprintf("Salvar Relatório Sintético por %s (Excel)", groupField),
+		DefaultFilename: fmt.Sprintf("sintetico_%s_%s.xlsx", strings.ToLower(groupField), time.Now().Format("20060102_150405")),
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Excel Files (*.xlsx)", Pattern: "*.xlsx"},
+		},
+	})
+
+	if err != nil || path == "" {
+		return "", nil
+	}
+
+	err = repository.ExportSummaryToExcel(data, filter, path, groupField, filter.SortField, filter.SortOrder)
+	if err != nil {
+		return "", fmt.Errorf("erro ao gerar excel: %v", err)
+	}
+
+	return path, nil
+}
+
+// ExportSummaryPDF exports a summary grouped by the specified field to a PDF file
+func (a *App) ExportSummaryPDF(filter models.AtendimentoFilter, groupField string) (string, error) {
+	data, err := a.atendimentosRepo.FetchAtendimentos(filter)
+	if err != nil {
+		return "", fmt.Errorf("erro ao buscar dados: %v", err)
+	}
+
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           fmt.Sprintf("Salvar Relatório Sintético por %s (PDF)", groupField),
+		DefaultFilename: fmt.Sprintf("sintetico_%s_%s.pdf", strings.ToLower(groupField), time.Now().Format("20060102_150405")),
+		Filters: []runtime.FileFilter{
+			{DisplayName: "PDF Files (*.pdf)", Pattern: "*.pdf"},
+		},
+	})
+
+	if err != nil || path == "" {
+		return "", nil
+	}
+
+	err = repository.ExportSummaryToPDF(data, filter, path, groupField, filter.SortField, filter.SortOrder)
+	if err != nil {
+		return "", fmt.Errorf("erro ao gerar PDF: %v", err)
+	}
+
+	return path, nil
+}
+
+// PreviewSummaryPDF generates a temporary PDF summary and opens it
+func (a *App) PreviewSummaryPDF(filter models.AtendimentoFilter, groupField string) error {
+	data, err := a.atendimentosRepo.FetchAtendimentos(filter)
+	if err != nil {
+		return fmt.Errorf("erro ao buscar dados: %v", err)
+	}
+
+	tempPath := os.TempDir() + fmt.Sprintf("/preview_sintetico_%s_%d.pdf", strings.ToLower(groupField), time.Now().Unix())
+	
+	err = repository.ExportSummaryToPDF(data, filter, tempPath, groupField, filter.SortField, filter.SortOrder)
+	if err != nil {
+		return fmt.Errorf("erro ao gerar PDF: %v", err)
+	}
+
+	return a.OpenFile(tempPath)
+}
+
+// GetAtendimentosPDFBase64 returns the analytic report PDF as a base64 string
+func (a *App) GetAtendimentosPDFBase64(filter models.AtendimentoFilter) (string, error) {
+	data, err := a.atendimentosRepo.FetchAtendimentos(filter)
+	if err != nil {
+		return "", fmt.Errorf("erro ao buscar dados: %v", err)
+	}
+
+	buf, err := repository.GetAtendimentosPDFBuffer(data, filter)
+	if err != nil {
+		return "", fmt.Errorf("erro ao gerar PDF: %v", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(buf), nil
+}
+
+// GetSummaryPDFBase64 returns the synthetic report PDF as a base64 string
+func (a *App) GetSummaryPDFBase64(filter models.AtendimentoFilter, groupField string) (string, error) {
+	data, err := a.atendimentosRepo.FetchAtendimentos(filter)
+	if err != nil {
+		return "", fmt.Errorf("erro ao buscar dados: %v", err)
+	}
+
+	buf, err := repository.GetSummaryPDFBuffer(data, filter, groupField, filter.SortField, filter.SortOrder)
+	if err != nil {
+		return "", fmt.Errorf("erro ao gerar PDF: %v", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(buf), nil
+}
+
 // OpenFile opens a file with the default system handler
 func (a *App) OpenFile(path string) error {
 	if path == "" {
@@ -167,7 +289,7 @@ func (a *App) TestDatabaseConfig(host, port, user, pass, name string) (string, e
 // SaveDatabaseConfig saves the database configuration to a .env file and initializes the connection
 func (a *App) SaveDatabaseConfig(host, port, user, pass, name string) (string, error) {
 	content := fmt.Sprintf("DB_HOST=%s\nDB_PORT=%s\nDB_USER=%s\nDB_PASS=%s\nDB_NAME=%s\n", host, port, user, pass, name)
-	err := os.WriteFile(".env", []byte(content), 0644)
+	err := os.WriteFile(config.GetConfigPath(), []byte(content), 0644)
 	if err != nil {
 		return "", fmt.Errorf("erro ao salvar arquivo .env: %w", err)
 	}
@@ -187,7 +309,16 @@ func (a *App) SaveDatabaseConfig(host, port, user, pass, name string) (string, e
 
 	a.db = db
 	a.atendimentosRepo = repository.NewAtendimentoRepository(a.db)
+	a.userRepo = repository.NewUserRepository(a.db)
 	return "Configuração aplicada com sucesso!", nil
+}
+
+// Login authenticates a user
+func (a *App) Login(username, password string) (*models.User, error) {
+	if a.userRepo == nil {
+		return nil, fmt.Errorf("repositório de usuários não inicializado")
+	}
+	return a.userRepo.Login(username, password)
 }
 
 // GetSistemas returns the list of available systems (from clientes table as requested)
@@ -233,12 +364,12 @@ func (a *App) GetHistoricos(atendimentoID int) ([]models.HistoricoAtendimento, e
 	return a.atendimentosRepo.FetchHistoricos(atendimentoID)
 }
 
-// SaveFilterPreset saves a named filter configuration to SQLite
-func (a *App) SaveFilterPreset(name string, filter interface{}) error {
+// SaveFilterPreset saves a named filter configuration to SQLite with ownership info
+func (a *App) SaveFilterPreset(name string, filter interface{}, userID int, userName string) error {
 	if a.settingsRepo == nil {
 		return fmt.Errorf("repositório de configurações não inicializado")
 	}
-	return a.settingsRepo.SaveFilterPreset(name, filter)
+	return a.settingsRepo.SaveFilterPreset(name, filter, userID, userName)
 }
 
 
@@ -251,11 +382,11 @@ func (a *App) GetFilterPresets() ([]repository.FilterPreset, error) {
 }
 
 // DeleteFilterPreset removes a saved filter configuration
-func (a *App) DeleteFilterPreset(name string) error {
+func (a *App) DeleteFilterPreset(name string, userID int) error {
 	if a.settingsRepo == nil {
 		return fmt.Errorf("repositório de configurações não inicializado")
 	}
-	return a.settingsRepo.DeleteFilterPreset(name)
+	return a.settingsRepo.DeleteFilterPreset(name, userID)
 }
 
 // Greet returns a greeting for the given name

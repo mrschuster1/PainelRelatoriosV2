@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"PainelRelatorios/models"
 )
@@ -140,7 +141,40 @@ func (r *AtendimentoRepository) FetchAtendimentos(filter models.AtendimentoFilte
 		args = append(args, filter.DataFim)
 	}
 
-	query += ` ORDER BY a.Id DESC LIMIT 1000`
+	// Dynamic Sorting
+	sortField := "a.Id"
+	sortOrder := "DESC"
+
+	if filter.SortField != "" {
+		switch filter.SortField {
+		case "cliente":
+			sortField = "c.Nome"
+		case "atendente":
+			sortField = "u.Nome"
+		case "dataAbertura":
+			sortField = "a.DataAbertura"
+		case "dataFechamento":
+			sortField = "a.DataFechamento"
+		case "sistema":
+			sortField = "c.Sistema"
+		case "categoria":
+			sortField = "a.Categoria"
+		case "acao":
+			sortField = "a.Acao"
+		case "setor":
+			sortField = "cel.Celula"
+		case "id":
+			sortField = "a.Id"
+		}
+	}
+
+	if strings.ToUpper(filter.SortOrder) == "ASC" {
+		sortOrder = "ASC"
+	} else if strings.ToUpper(filter.SortOrder) == "DESC" {
+		sortOrder = "DESC"
+	}
+
+	query += fmt.Sprintf(` ORDER BY %s %s`, sortField, sortOrder)
 
 	if r.db == nil {
 		return nil, fmt.Errorf("conexão com o banco de dados não inicializada")
@@ -210,12 +244,55 @@ func (r *AtendimentoRepository) GetLookupOptions(table string, valueField string
 
 func (r *AtendimentoRepository) SearchClientes(term string) ([]models.LookupOption, error) {
 	var options []models.LookupOption
-	query := `SELECT Id, Nome FROM clientes 
-	          WHERE Nome LIKE ? OR RazaoSocial LIKE ? OR Id = ? OR CpfCnpj LIKE ?
-	          LIMIT 50`
 	
-	LogSQL(query, "%"+term+"%", "%"+term+"%", term, "%"+term+"%")
-	rows, err := r.db.Query(query, "%"+term+"%", "%"+term+"%", term, "%"+term+"%")
+	words := strings.Fields(term)
+	if len(words) == 0 {
+		return options, nil
+	}
+
+	query := `SELECT Id, Nome FROM clientes WHERE 1=1`
+	var args []interface{}
+
+	// If it's a numeric ID, search by ID first
+	if len(words) == 1 && strings.IndexFunc(words[0], func(r rune) bool { return r < '0' || r > '9' }) == -1 {
+		query += ` AND Id = ?`
+		args = append(args, words[0])
+	} else {
+		query += ` AND (`
+		for i, word := range words {
+			if i > 0 {
+				query += ` OR `
+			}
+			query += `(Nome LIKE ? OR RazaoSocial LIKE ? OR CpfCnpj LIKE ?)`
+			pattern := "%" + word + "%"
+			args = append(args, pattern, pattern, pattern)
+		}
+		query += `)`
+	}
+
+	LogSQL(query, args...)
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var opt models.LookupOption
+		if err := rows.Scan(&opt.ID, &opt.Label); err != nil {
+			return nil, err
+		}
+		options = append(options, opt)
+	}
+	return options, nil
+}
+
+func (r *AtendimentoRepository) GetAllClientes() ([]models.LookupOption, error) {
+	var options []models.LookupOption
+	query := `SELECT Id, Nome FROM clientes ORDER BY Nome`
+	
+	LogSQL(query)
+	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, err
 	}

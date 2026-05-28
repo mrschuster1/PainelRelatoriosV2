@@ -16,11 +16,38 @@
     margin-bottom: 24px;
 }
 
+.about-logo-container {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, var(--primary), #6366f1);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 25px -5px var(--primary-glow);
+    transition: transform 0.3s ease;
+}
+
+.theme-light .about-logo-container {
+    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.about-logo-container:hover {
+    transform: scale(1.05) rotate(2deg);
+}
+
 .about-logo {
-    width: 80px;
-    height: 80px;
-    margin-bottom: 16px;
-    filter: drop-shadow(0 4px 12px rgba(var(--primary-rgb), 0.3));
+    width: 64px;
+    height: 64px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.theme-light .about-logo {
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
 }
 
 .about-header h2 {

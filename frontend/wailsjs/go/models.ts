@@ -67,7 +67,9 @@ export namespace models {
 	    setores: string[];
 	    acoes: string[];
 	    unidades: string[];
-	    groupBy: string;
+	    groups: string[];
+	    sortField: string;
+	    sortOrder: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new AtendimentoFilter(source);
@@ -85,7 +87,9 @@ export namespace models {
 	        this.setores = source["setores"];
 	        this.acoes = source["acoes"];
 	        this.unidades = source["unidades"];
-	        this.groupBy = source["groupBy"];
+	        this.groups = source["groups"];
+	        this.sortField = source["sortField"];
+	        this.sortOrder = source["sortOrder"];
 	    }
 	}
 	export class HistoricoAtendimento {
@@ -124,6 +128,24 @@ export namespace models {
 	        this.label = source["label"];
 	    }
 	}
+	export class User {
+	    id: number;
+	    nome: string;
+	    senha: string;
+	    ativo: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new User(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.nome = source["nome"];
+	        this.senha = source["senha"];
+	        this.ativo = source["ativo"];
+	    }
+	}
 
 }
 
@@ -133,6 +155,8 @@ export namespace repository {
 	    id: number;
 	    name: string;
 	    filter_json: string;
+	    user_id: number;
+	    user_name: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new FilterPreset(source);
@@ -143,6 +167,8 @@ export namespace repository {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.filter_json = source["filter_json"];
+	        this.user_id = source["user_id"];
+	        this.user_name = source["user_name"];
 	    }
 	}
 

@@ -1,4 +1,4 @@
-# PainelRelatoriosV2 — Analytics & Reporting Dashboard
+# Painel Relatórios — Analytics & Reporting Dashboard
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Wails](https://img.shields.io/badge/built%20with-Wails-red.svg)
